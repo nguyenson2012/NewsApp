@@ -1,12 +1,17 @@
 package com.nguyenthanhson.newsapp.utility;
 
+import android.util.Log;
+
 import com.nguyenthanhson.newsapp.model.ArticleInfo;
 
 import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,9 +24,12 @@ public class XMLRSSParser {
     public static String TITLE="title";
     public static String LINK="link";
     public static String DATE="pubDate";
+    public static String IMG="image";
+    public static String DESCRIPTION="description";
 
+    private static final String TAG = XMLRSSParser.class.getSimpleName();
     private ArticleInfo item;
-    private List<ArticleInfo> listArticle=new ArrayList<ArticleInfo>();
+    private ArrayList<ArticleInfo> listArticle=new ArrayList<ArticleInfo>();
     private boolean itemStarted;
     public boolean parsingComplete=true;
     private String link;
@@ -54,21 +62,22 @@ public class XMLRSSParser {
                         break;
 
                     case XmlPullParser.END_TAG:
-                        if(name.equals(ITEM)){
-                            listArticle.add(item);
-                            itemStarted=false;
-
-                        }
-                        else if(itemStarted&&name.equals(TITLE)){
+                        if(itemStarted&&name.equals(TITLE)){
                              item.setTitle(text);
                         }
 
                         else if(itemStarted&&name.equals(LINK)){
                             item.setLink(text);
                         }
-
                         else if(itemStarted&&name.equals(DATE)){
                             item.setDate(text);
+                        }else if(itemStarted&&name.equals(DESCRIPTION)){
+                            item.setDescription(text);
+                        }else if(name.equals(ITEM)){
+                            item.perfectDescription();
+                            listArticle.add(item);
+                            itemStarted=false;
+
                         }
                         break;
                 }
@@ -77,42 +86,32 @@ public class XMLRSSParser {
             parsingComplete = false;
         }
 
+
         catch (Exception e) {
             e.printStackTrace();
         }
     }
-    public void fetchXML(){
-        Thread thread = new Thread(new Runnable(){
-            @Override
-            public void run() {
-                try {
-                    URL url = new URL(link);
-                    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+    public void fetchXML() {
+        try {
+            InputStream stream = NetworkConnection.downloadUrlInputStream(link);
+            xmlFactoryObject = XmlPullParserFactory.newInstance();
+            XmlPullParser myparser = xmlFactoryObject.newPullParser();
 
-                    conn.setReadTimeout(10000 /* milliseconds */);
-                    conn.setConnectTimeout(15000 /* milliseconds */);
-                    conn.setRequestMethod("GET");
-                    conn.setDoInput(true);
-                    conn.connect();
+            myparser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES
+                    , false);
+            myparser.setInput(stream, null);
+            parseXMLAndStoreIt(myparser);
+            stream.close();
+        } catch (MalformedURLException e) {
+            Log.i(TAG, "" + e.getMessage());
+        } catch (IOException e) {
+            Log.i(TAG, "" + e.getMessage());
+        } catch (XmlPullParserException e) {
+            Log.i(TAG, "" + e.getMessage());
+        }
 
-                    InputStream stream = conn.getInputStream();
-                    xmlFactoryObject = XmlPullParserFactory.newInstance();
-                    XmlPullParser myparser = xmlFactoryObject.newPullParser();
-
-                    myparser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
-                    myparser.setInput(stream, null);
-
-                    parseXMLAndStoreIt(myparser);
-                    stream.close();
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        thread.start();
     }
-    public List<ArticleInfo> getListArticle(){
+    public ArrayList<ArticleInfo> getListArticle(){
         return listArticle;
     }
 }

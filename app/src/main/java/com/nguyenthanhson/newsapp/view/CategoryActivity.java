@@ -30,7 +30,7 @@ public class CategoryActivity extends Activity {
     ListView listViewCategory;
     TextView tvNameNewspaper;
     MyListAdapter myListAdapter;
-    List<ArticleInfo> listArticle= new ArrayList<ArticleInfo>();
+    ArrayList<ArticleInfo> listArticle= new ArrayList<ArticleInfo>();
     Intent intent;
     int paper;
     @Override
@@ -57,42 +57,9 @@ public class CategoryActivity extends Activity {
                 intent=new Intent(CategoryActivity.this,NewsOfCategoryActivity.class);
                 intent.putExtra(Variables.PAPER,paper);
                 intent.putExtra(Variables.CATEGORY, position);
-                new RetrieveFeedTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,position);
-
-
-
-
-
+                startActivity(intent);
             }
         });
-    }
-    class RetrieveFeedTask extends AsyncTask<Integer, Void, Void> {
-
-        private Exception exception;
-
-        protected Void doInBackground(Integer... array) {
-            try {
-                Log.e("link",Variables.LINKS[paper][array[0]]);
-                XMLRSSParser parser=new XMLRSSParser(Variables.LINKS[paper][array[0]]);
-                parser.fetchXML();
-                while (parser.parsingComplete);
-                listArticle = parser.getListArticle();
-                int keyCategory=paper*1000+array[0];
-                Variables.newsHashMap.put(keyCategory, listArticle);
-                Log.e("ListArticle", listArticle.size() + "");
-            } catch (Exception e) {
-                this.exception = e;
-                return null;
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            startActivity(intent);
-
-        }
     }
 
     private void setAdapterForListCategory() {

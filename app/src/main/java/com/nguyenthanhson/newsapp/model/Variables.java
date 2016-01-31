@@ -1,5 +1,6 @@
 package com.nguyenthanhson.newsapp.model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -27,6 +28,6 @@ public class Variables {
     public static final String PAPER="paper";
     public static final String ARTICLE="article";
 
-    public static final HashMap<Integer,List<ArticleInfo>> newsHashMap=new HashMap<Integer,List<ArticleInfo>>();
+    public static final HashMap<Integer,ArrayList<ArticleInfo>> newsHashMap=new HashMap<Integer,ArrayList<ArticleInfo>>();
 
 }
